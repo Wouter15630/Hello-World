@@ -1,0 +1,52 @@
+*{
+  text-align: center;
+
+}
+
+body {
+    background-image: url("background.jpg");
+    background-size: 1920px 1080px;
+    background-repeat: no-repeat;
+    background-attachment: 
+}
+
+.header{
+  font-size: 50px;
+  margin: 30px 0 60 0;
+  font-family: "Roboto";
+  font-weight: 200;
+
+}
+
+.lines{
+  max-width: 600px;
+}
+
+.fonts {
+  color : red;
+  display: inline;
+  font-size: 20px;
+  font-family: "Roboto";
+  font-weight: 300;
+}
+
+.ghost-button {
+  user-select: none;
+  cursor: pointer;
+  display: inline-block;
+  width: 200px;
+  padding: 8px;
+  color: #fff;
+  border: 1px solid #fff;
+  text-align: center;
+  outline: none;
+  text-decoration: none;
+}
+
+.ghost-button:hover,
+.ghost-button:active {
+  user-select: none;
+  background-color: #fff;
+  opacity: 0.5;
+  color: #000;
+}
