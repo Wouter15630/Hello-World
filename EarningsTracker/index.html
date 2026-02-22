@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earnings Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ── Setup Screen ──────────────────────────────────────── -->
+  <div id="setup-screen" class="screen hidden">
+    <div class="setup-wrapper">
+      <div class="setup-card">
+        <div class="setup-icon">€</div>
+        <h1>Earnings Tracker</h1>
+        <p class="text-muted">Configure your earnings profile to get started.</p>
+
+        <form id="setup-form" novalidate>
+          <div class="form-group">
+            <label for="setup-earnings">Monthly Earnings</label>
+            <div class="input-prefix">
+              <span>€</span>
+              <input type="number" id="setup-earnings" placeholder="5000" min="1" step="0.01" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tracking Mode</label>
+            <div class="mode-toggle" id="setup-mode-toggle">
+              <button type="button" class="mode-btn active" data-mode="hours">Work Hours</button>
+              <button type="button" class="mode-btn" data-mode="247">24 / 7</button>
+            </div>
+          </div>
+
+          <div id="setup-hours-config" class="hours-config">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="setup-start">Start Time</label>
+                <input type="time" id="setup-start" value="09:00">
+              </div>
+              <div class="form-group">
+                <label for="setup-end">End Time</label>
+                <input type="time" id="setup-end" value="17:00">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="setup-days">Work Days per Month</label>
+              <input type="number" id="setup-days" value="22" min="1" max="31">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Start Tracking →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main Screen ───────────────────────────────────────── -->
+  <div id="main-screen" class="screen hidden">
+
+    <header class="top-bar">
+      <span class="brand">Earnings Tracker</span>
+      <button id="settings-btn" class="icon-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="main-content">
+
+      <!-- Counter -->
+      <div class="counter-card">
+        <div class="date-display" id="date-display"></div>
+        <div class="earned-label">EARNED TODAY</div>
+        <div class="counter" id="counter">€0.00</div>
+        <div class="status-badge" id="status-badge"></div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-card">
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-meta">
+          <span id="prog-start">09:00</span>
+          <span id="prog-pct" class="prog-pct">0%</span>
+          <span id="prog-end">17:00</span>
+        </div>
+      </div>
+
+      <!-- Rates -->
+      <div class="rates-row">
+        <div class="rate-card">
+          <span class="rate-label">Per Hour</span>
+          <span class="rate-value" id="rate-hour">—</span>
+        </div>
+        <div class="rate-card">
+          <span class="rate-label">Per Minute</span>
+          <span class="rate-value" id="rate-min">—</span>
+        </div>
+        <div class="rate-card">
+          <span class="rate-label">Per Second</span>
+          <span class="rate-value" id="rate-sec">—</span>
+        </div>
+      </div>
+
+      <!-- Bonuses -->
+      <div class="bonus-section">
+        <button class="btn-ghost" id="add-bonus-btn">+ Add Extra Earnings</button>
+        <div id="bonus-list"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Settings Modal ────────────────────────────────────── -->
+  <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" id="settings-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="close-settings-btn">✕</button>
+      </div>
+      <form id="settings-form" novalidate>
+        <div class="form-group">
+          <label for="s-earnings">Monthly Earnings</label>
+          <div class="input-prefix">
+            <span>€</span>
+            <input type="number" id="s-earnings" min="1" step="0.01" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tracking Mode</label>
+          <div class="mode-toggle" id="s-mode-toggle">
+            <button type="button" class="mode-btn" data-mode="hours">Work Hours</button>
+            <button type="button" class="mode-btn" data-mode="247">24 / 7</button>
+          </div>
+        </div>
+
+        <div id="s-hours-config" class="hours-config">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="s-start">Start Time</label>
+              <input type="time" id="s-start">
+            </div>
+            <div class="form-group">
+              <label for="s-end">End Time</label>
+              <input type="time" id="s-end">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="s-days">Work Days per Month</label>
+            <input type="number" id="s-days" min="1" max="31">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Save Changes</button>
+          <button type="button" class="btn-danger" id="reset-btn">Reset All Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Add Bonus Modal ───────────────────────────────────── -->
+  <div id="bonus-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" id="bonus-backdrop"></div>
+    <div class="modal-box modal-sm">
+      <div class="modal-head">
+        <h2>Add Extra Earnings</h2>
+        <button class="icon-btn" id="close-bonus-btn">✕</button>
+      </div>
+      <form id="bonus-form" novalidate>
+        <div class="form-group">
+          <label for="bonus-label-input">Description</label>
+          <input type="text" id="bonus-label-input" placeholder="e.g. Project bonus" required maxlength="60">
+        </div>
+        <div class="form-group">
+          <label for="bonus-amount-input">Amount</label>
+          <div class="input-prefix">
+            <span>€</span>
+            <input type="number" id="bonus-amount-input" placeholder="500" min="0.01" step="0.01" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Add to Today</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
