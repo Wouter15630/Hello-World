@@ -384,6 +384,11 @@ def main():
     exp.add_argument("--output", default="valid_keys_export.csv")
     exp.add_argument("--product", default=None)
 
+    # check commando (losse key)
+    chk = subparsers.add_parser("check", help="Controleer één losse licentiesleutel")
+    chk.add_argument("key", help="De licentiesleutel (bv. XXXXX-XXXXX-XXXXX-XXXXX-XXXXX)")
+    chk.add_argument("--no-slmgr", action="store_true", help="Sla slmgr validatie over")
+
     # sell commando
     sell = subparsers.add_parser("sell", help="Markeer sleutel als verkocht")
     sell.add_argument("--key", required=True)
@@ -409,6 +414,13 @@ def main():
     elif args.command == "export":
         count = export_valid_keys(args.output, product=args.product)
         print(f"{count} sleutels geëxporteerd naar {args.output}")
+
+    elif args.command == "check":
+        result = validate_key(args.key, use_slmgr=not args.no_slmgr)
+        status_label = {"valid": "GELDIG", "format_ok": "FORMAAT OK", "invalid": "ONGELDIG"}.get(result["status"], result["status"])
+        print(f"\nSleutel : {result['key']}")
+        print(f"Status  : {status_label}")
+        print(f"Details : {result['notes']}")
 
     elif args.command == "sell":
         success = mark_as_sold(args.key, args.order)
