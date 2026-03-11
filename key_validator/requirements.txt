@@ -1,0 +1,6 @@
+# Geen externe dependencies nodig — alleen Python stdlib
+# Python 3.10+ vereist (voor tuple[bool, str] type hints)
+#
+# Optioneel voor productie / WooCommerce integratie:
+# requests>=2.31.0       # WooCommerce REST API calls
+# python-dotenv>=1.0.0   # .env bestanden voor SMTP config
