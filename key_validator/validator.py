@@ -115,7 +115,7 @@ def validate_with_slmgr(key: str) -> tuple[bool, str]:
         )
         output = result.stdout + result.stderr
 
-        if "successfully" in output.lower():
+        if "successfully" in output.lower() or "geïnstalleerd" in output.lower() or "ge\u2039nstalleerd" in output.lower() or "ge nstalleerd" in output.lower():
             # Verwijder key direct na validatie
             subprocess.run(
                 ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/upk"],
