@@ -9,7 +9,7 @@ Gebruik:
     python validator.py --stats
 """
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 import argparse
 import csv
@@ -65,6 +65,7 @@ def init_db(conn: sqlite3.Connection) -> None:
             key          TEXT    UNIQUE NOT NULL,
             product      TEXT,
             status       TEXT    DEFAULT 'pending',
+            key_type     TEXT,
             batch_id     TEXT,
             validated_at TEXT,
             sold_at      TEXT,
@@ -90,6 +91,27 @@ def get_conn() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     init_db(conn)
     return conn
+
+
+# Kanaal-patronen zoals teruggegeven door slmgr /dlv (in productnaam)
+# Volgorde is belangrijk: specifieker eerst
+KEY_CHANNELS = [
+    (r"VOLUME_KMSCLIENT|VOLUME_KMS\b",          "Volume (KMS)"),
+    (r"VOLUME_MAK",                              "Volume (MAK)"),
+    (r"OEM_SLP|OEM_DM|OEM\b",                   "OEM"),
+    (r"EVALUATION",                              "Evaluatie"),
+    (r"MSDN",                                    "MSDN/Developer"),
+    (r"RETAIL",                                  "Retail"),
+]
+
+
+def _parse_key_channel(dlv_output: str) -> str:
+    """Detecteer het sleuteltype (kanaal) uit slmgr /dlv output."""
+    text = dlv_output.upper()
+    for pattern, label in KEY_CHANNELS:
+        if re.search(pattern, text):
+            return label
+    return "Onbekend"
 
 
 # Bekende Microsoft activerings-foutcodes
@@ -121,51 +143,56 @@ def _slmgr(args: list, timeout: int = 60) -> str:
     return r.stdout.decode("cp850", errors="replace") + r.stderr.decode("cp850", errors="replace")
 
 
-def validate_with_slmgr(key: str) -> tuple[bool, str]:
+def validate_with_slmgr(key: str) -> tuple[bool, str, str]:
     """
     Valideert een Windows key via slmgr.vbs (alleen op Windows).
     Stap 1: /ipk  — registreer de sleutel
-    Stap 2: /ato  — probeer te activeren via Microsoft
-    Stap 3: /upk  — verwijder de sleutel altijd achteraf
-    Geeft (is_valid, message) terug.
+    Stap 2: /dlv  — detecteer sleuteltype (Retail/OEM/Volume/...)
+    Stap 3: /ato  — probeer te activeren via Microsoft
+    Stap 4: /upk  — verwijder de sleutel altijd achteraf
+    Geeft (is_valid, message, key_type) terug.
     """
     if sys.platform != "win32":
-        return False, "slmgr alleen beschikbaar op Windows"
+        return False, "slmgr alleen beschikbaar op Windows", ""
 
     try:
         # Stap 1: registreer sleutel
         out_ipk = _slmgr(["/ipk", key], timeout=30)
         if not ("successfully" in out_ipk.lower() or re.search(r'ge.?nstalleerd', out_ipk, re.IGNORECASE)):
-            return False, out_ipk.strip() or "Sleutel geweigerd door Windows (slmgr /ipk)."
+            return False, out_ipk.strip() or "Sleutel geweigerd door Windows (slmgr /ipk).", ""
 
-        # Stap 2: probeer activering via Microsoft
+        # Stap 2: detecteer sleuteltype
+        out_dlv = _slmgr(["/dlv"], timeout=15)
+        key_type = _parse_key_channel(out_dlv)
+
+        # Stap 3: probeer activering via Microsoft
         try:
             out_ato = _slmgr(["/ato"], timeout=60)
         except subprocess.TimeoutExpired:
             _slmgr(["/upk"], timeout=15)
-            return False, "Timeout: Microsoft-activeringsserver niet bereikbaar."
+            return False, "Timeout: Microsoft-activeringsserver niet bereikbaar.", key_type
 
-        # Stap 3: verwijder sleutel altijd
+        # Stap 4: verwijder sleutel altijd
         _slmgr(["/upk"], timeout=15)
 
         # Activering gelukt?
         if "successfully activated" in out_ato.lower() or re.search(r'geactiveerd', out_ato, re.IGNORECASE):
-            return True, "Sleutel geregistreerd én geactiveerd via Microsoft."
+            return True, "Sleutel geregistreerd én geactiveerd via Microsoft.", key_type
 
         # Zoek bekende foutcode in output
         for code, uitleg in ACTIVATION_ERRORS.items():
             if code.lower() in out_ato.lower():
-                return False, f"Activering mislukt ({code}): {uitleg}"
+                return False, f"Activering mislukt ({code}): {uitleg}", key_type
 
         # Onbekende foutcode
         match = re.search(r'0x[0-9A-Fa-f]{8}', out_ato)
         code_str = match.group(0) if match else "onbekend"
-        return False, f"Activering mislukt ({code_str}): {out_ato.strip()}"
+        return False, f"Activering mislukt ({code_str}): {out_ato.strip()}", key_type
 
     except subprocess.TimeoutExpired:
-        return False, "Timeout bij slmgr validatie"
+        return False, "Timeout bij slmgr validatie", ""
     except Exception as e:
-        return False, f"Fout: {e}"
+        return False, f"Fout: {e}", ""
 
 
 def validate_key(key: str, use_slmgr: bool = True) -> dict:
@@ -178,6 +205,7 @@ def validate_key(key: str, use_slmgr: bool = True) -> dict:
     result = {
         "key": key,
         "status": "invalid",
+        "key_type": "",
         "notes": "",
         "validated_at": datetime.now().isoformat(),
     }
@@ -189,8 +217,9 @@ def validate_key(key: str, use_slmgr: bool = True) -> dict:
 
     # Stap 2: slmgr (Windows only)
     if use_slmgr and sys.platform == "win32":
-        is_valid, msg = validate_with_slmgr(key)
+        is_valid, msg, key_type = validate_with_slmgr(key)
         result["status"] = "valid" if is_valid else "invalid"
+        result["key_type"] = key_type
         result["notes"] = msg
     else:
         # Op niet-Windows: formaat is voldoende basischeck
@@ -260,8 +289,8 @@ def process_batch(
 
         # Sla op in DB
         conn.execute("""
-            INSERT INTO license_keys (key, product, status, batch_id, validated_at, notes)
-            VALUES (:key, :product, :status, :batch_id, :validated_at, :notes)
+            INSERT INTO license_keys (key, product, status, key_type, batch_id, validated_at, notes)
+            VALUES (:key, :product, :status, :key_type, :batch_id, :validated_at, :notes)
         """, result)
 
         if result["status"] in ("valid", "format_ok"):
@@ -461,6 +490,8 @@ def main():
         status_label = {"valid": "GELDIG", "format_ok": "FORMAAT OK", "invalid": "ONGELDIG"}.get(result["status"], result["status"])
         print(f"\nSleutel  : {result['key']}")
         print(f"Status   : {status_label}")
+        if result.get("key_type"):
+            print(f"Type     : {result['key_type']}")
         print(f"Details  : {result['notes']}")
         if result["status"] == "valid":
             print(f"\nLet op    : Sleutel is geactiveerd via Microsoft — klaar voor gebruik.")
