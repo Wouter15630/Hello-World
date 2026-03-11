@@ -122,9 +122,9 @@ def validate_with_slmgr(key: str) -> tuple[bool, str]:
                 ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/upk"],
                 capture_output=True, timeout=30
             )
-            return True, "Geldig (slmgr)"
+            return True, "Sleutel geregistreerd door Windows (slmgr /ipk). Formaat en structuur zijn geldig — activering via Microsoft is niet getest."
         else:
-            return False, output.strip() or "Ongeldig (slmgr)"
+            return False, output.strip() or "Sleutel geweigerd door Windows (slmgr /ipk)."
 
     except subprocess.TimeoutExpired:
         return False, "Timeout bij slmgr validatie"
@@ -419,9 +419,15 @@ def main():
     elif args.command == "check":
         result = validate_key(args.key, use_slmgr=not args.no_slmgr)
         status_label = {"valid": "GELDIG", "format_ok": "FORMAAT OK", "invalid": "ONGELDIG"}.get(result["status"], result["status"])
-        print(f"\nSleutel : {result['key']}")
-        print(f"Status  : {status_label}")
-        print(f"Details : {result['notes']}")
+        print(f"\nSleutel  : {result['key']}")
+        print(f"Status   : {status_label}")
+        print(f"Details  : {result['notes']}")
+        if result["status"] == "valid":
+            print(f"\nLet op    : 'Geregistreerd' betekent dat Windows de sleutel accepteert.")
+            print(f"           Activering via Microsoft (online/telefoon) is een aparte stap.")
+        elif result["status"] == "invalid":
+            print(f"\nLet op    : 'Ongeldig' betekent dat Windows de sleutel weigert bij registratie.")
+            print(f"           Deze sleutel kan niet worden geactiveerd.")
 
     elif args.command == "sell":
         success = mark_as_sold(args.key, args.order)
