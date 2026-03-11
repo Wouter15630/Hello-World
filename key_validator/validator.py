@@ -9,6 +9,8 @@ Gebruik:
     python validator.py --stats
 """
 
+__version__ = "1.3.0"
+
 import argparse
 import csv
 import json
@@ -369,6 +371,7 @@ def mark_as_sold(key: str, order_id: str) -> bool:
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Productlicenties.nl Key Validator")
+    parser.add_argument("--version", action="version", version=f"validator {__version__}")
     subparsers = parser.add_subparsers(dest="command")
 
     # validate commando
