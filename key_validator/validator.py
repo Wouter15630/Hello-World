@@ -111,11 +111,12 @@ def validate_with_slmgr(key: str) -> tuple[bool, str]:
         # Installeer key tijdelijk
         result = subprocess.run(
             ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/ipk", key],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, timeout=30
         )
-        output = result.stdout + result.stderr
+        # Decodeer met OEM-codepage (cp850) voor correcte Nederlandse tekens
+        output = result.stdout.decode("cp850", errors="replace") + result.stderr.decode("cp850", errors="replace")
 
-        if "successfully" in output.lower() or "geïnstalleerd" in output.lower() or "ge\u2039nstalleerd" in output.lower() or "ge nstalleerd" in output.lower():
+        if "successfully" in output.lower() or re.search(r'ge.?nstalleerd', output, re.IGNORECASE):
             # Verwijder key direct na validatie
             subprocess.run(
                 ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/upk"],
