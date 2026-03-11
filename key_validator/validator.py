@@ -370,8 +370,11 @@ def mark_as_sold(key: str, order_id: str) -> bool:
 # CLI
 # ---------------------------------------------------------------------------
 def main():
+    if "--version" in sys.argv:
+        print(f"validator {__version__}")
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(description="Productlicenties.nl Key Validator")
-    parser.add_argument("--version", action="version", version=f"validator {__version__}")
     subparsers = parser.add_subparsers(dest="command")
 
     # validate commando
