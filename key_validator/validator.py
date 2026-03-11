@@ -86,6 +86,16 @@ def init_db(conn: sqlite3.Connection) -> None:
             created_at  TEXT
         )
     """)
+    # Migratie: voeg ontbrekende kolommen toe aan bestaande databases
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(license_keys)")}
+    for col, definition in [
+        ("key_type",    "TEXT"),
+        ("edition",     "TEXT"),
+        ("partial_key", "TEXT"),
+        ("expiry",      "TEXT"),
+    ]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE license_keys ADD COLUMN {col} {definition}")
     conn.commit()
 
 
