@@ -9,7 +9,7 @@ Gebruik:
     python validator.py --stats
 """
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 import argparse
 import csv
@@ -92,6 +92,18 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+# Bekende Microsoft activerings-foutcodes
+ACTIVATION_ERRORS = {
+    "0xC004C060": "Sleutel is geblokkeerd door Microsoft (zwarte lijst).",
+    "0xC004C008": "Sleutel heeft het maximaal aantal activeringen bereikt.",
+    "0xC004F050": "Sleutel is ongeldig voor activering.",
+    "0xC004F034": "Geen overeenkomstige licentie gevonden voor deze sleutel.",
+    "0xC004B100": "Activering mislukt (algemene Microsoft-fout).",
+    "0x8007007B": "Netwerkfout bij activering (DNS-probleem).",
+    "0x800705B4": "Timeout: kon Microsoft-activeringsserver niet bereiken.",
+}
+
+
 # ---------------------------------------------------------------------------
 # Key validation
 # ---------------------------------------------------------------------------
@@ -100,33 +112,55 @@ def validate_format(key: str) -> bool:
     return bool(KEY_PATTERN.match(key.strip().upper()))
 
 
+def _slmgr(args: list, timeout: int = 60) -> str:
+    """Voer slmgr.vbs uit en geef output terug als string (cp850 gedecodeerd)."""
+    r = subprocess.run(
+        ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs"] + args,
+        capture_output=True, timeout=timeout
+    )
+    return r.stdout.decode("cp850", errors="replace") + r.stderr.decode("cp850", errors="replace")
+
+
 def validate_with_slmgr(key: str) -> tuple[bool, str]:
     """
     Valideert een Windows key via slmgr.vbs (alleen op Windows).
-    Installeert de key tijdelijk en verwijdert hem daarna direct.
+    Stap 1: /ipk  — registreer de sleutel
+    Stap 2: /ato  — probeer te activeren via Microsoft
+    Stap 3: /upk  — verwijder de sleutel altijd achteraf
     Geeft (is_valid, message) terug.
     """
     if sys.platform != "win32":
         return False, "slmgr alleen beschikbaar op Windows"
 
     try:
-        # Installeer key tijdelijk
-        result = subprocess.run(
-            ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/ipk", key],
-            capture_output=True, timeout=30
-        )
-        # Decodeer met OEM-codepage (cp850) voor correcte Nederlandse tekens
-        output = result.stdout.decode("cp850", errors="replace") + result.stderr.decode("cp850", errors="replace")
+        # Stap 1: registreer sleutel
+        out_ipk = _slmgr(["/ipk", key], timeout=30)
+        if not ("successfully" in out_ipk.lower() or re.search(r'ge.?nstalleerd', out_ipk, re.IGNORECASE)):
+            return False, out_ipk.strip() or "Sleutel geweigerd door Windows (slmgr /ipk)."
 
-        if "successfully" in output.lower() or re.search(r'ge.?nstalleerd', output, re.IGNORECASE):
-            # Verwijder key direct na validatie
-            subprocess.run(
-                ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/upk"],
-                capture_output=True, timeout=30
-            )
-            return True, "Sleutel geregistreerd door Windows (slmgr /ipk). Formaat en structuur zijn geldig — activering via Microsoft is niet getest."
-        else:
-            return False, output.strip() or "Sleutel geweigerd door Windows (slmgr /ipk)."
+        # Stap 2: probeer activering via Microsoft
+        try:
+            out_ato = _slmgr(["/ato"], timeout=60)
+        except subprocess.TimeoutExpired:
+            _slmgr(["/upk"], timeout=15)
+            return False, "Timeout: Microsoft-activeringsserver niet bereikbaar."
+
+        # Stap 3: verwijder sleutel altijd
+        _slmgr(["/upk"], timeout=15)
+
+        # Activering gelukt?
+        if "successfully activated" in out_ato.lower() or re.search(r'geactiveerd', out_ato, re.IGNORECASE):
+            return True, "Sleutel geregistreerd én geactiveerd via Microsoft."
+
+        # Zoek bekende foutcode in output
+        for code, uitleg in ACTIVATION_ERRORS.items():
+            if code.lower() in out_ato.lower():
+                return False, f"Activering mislukt ({code}): {uitleg}"
+
+        # Onbekende foutcode
+        match = re.search(r'0x[0-9A-Fa-f]{8}', out_ato)
+        code_str = match.group(0) if match else "onbekend"
+        return False, f"Activering mislukt ({code_str}): {out_ato.strip()}"
 
     except subprocess.TimeoutExpired:
         return False, "Timeout bij slmgr validatie"
@@ -429,11 +463,9 @@ def main():
         print(f"Status   : {status_label}")
         print(f"Details  : {result['notes']}")
         if result["status"] == "valid":
-            print(f"\nLet op    : 'Geregistreerd' betekent dat Windows de sleutel accepteert.")
-            print(f"           Activering via Microsoft (online/telefoon) is een aparte stap.")
+            print(f"\nLet op    : Sleutel is geactiveerd via Microsoft — klaar voor gebruik.")
         elif result["status"] == "invalid":
-            print(f"\nLet op    : 'Ongeldig' betekent dat Windows de sleutel weigert bij registratie.")
-            print(f"           Deze sleutel kan niet worden geactiveerd.")
+            print(f"\nLet op    : Sleutel is geweigerd. Zie Details voor de foutcode en reden.")
 
     elif args.command == "sell":
         success = mark_as_sold(args.key, args.order)
