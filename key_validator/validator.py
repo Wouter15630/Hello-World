@@ -9,6 +9,8 @@ Gebruik:
     python validator.py --stats
 """
 
+__version__ = "1.3.0"
+
 import argparse
 import csv
 import json
@@ -111,19 +113,20 @@ def validate_with_slmgr(key: str) -> tuple[bool, str]:
         # Installeer key tijdelijk
         result = subprocess.run(
             ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/ipk", key],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, timeout=30
         )
-        output = result.stdout + result.stderr
+        # Decodeer met OEM-codepage (cp850) voor correcte Nederlandse tekens
+        output = result.stdout.decode("cp850", errors="replace") + result.stderr.decode("cp850", errors="replace")
 
-        if "successfully" in output.lower():
+        if "successfully" in output.lower() or re.search(r'ge.?nstalleerd', output, re.IGNORECASE):
             # Verwijder key direct na validatie
             subprocess.run(
                 ["cscript", "//nologo", r"C:\Windows\System32\slmgr.vbs", "/upk"],
                 capture_output=True, timeout=30
             )
-            return True, "Geldig (slmgr)"
+            return True, "Sleutel geregistreerd door Windows (slmgr /ipk). Formaat en structuur zijn geldig — activering via Microsoft is niet getest."
         else:
-            return False, output.strip() or "Ongeldig (slmgr)"
+            return False, output.strip() or "Sleutel geweigerd door Windows (slmgr /ipk)."
 
     except subprocess.TimeoutExpired:
         return False, "Timeout bij slmgr validatie"
@@ -367,6 +370,10 @@ def mark_as_sold(key: str, order_id: str) -> bool:
 # CLI
 # ---------------------------------------------------------------------------
 def main():
+    if "--version" in sys.argv:
+        print(f"validator {__version__}")
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(description="Productlicenties.nl Key Validator")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -418,9 +425,15 @@ def main():
     elif args.command == "check":
         result = validate_key(args.key, use_slmgr=not args.no_slmgr)
         status_label = {"valid": "GELDIG", "format_ok": "FORMAAT OK", "invalid": "ONGELDIG"}.get(result["status"], result["status"])
-        print(f"\nSleutel : {result['key']}")
-        print(f"Status  : {status_label}")
-        print(f"Details : {result['notes']}")
+        print(f"\nSleutel  : {result['key']}")
+        print(f"Status   : {status_label}")
+        print(f"Details  : {result['notes']}")
+        if result["status"] == "valid":
+            print(f"\nLet op    : 'Geregistreerd' betekent dat Windows de sleutel accepteert.")
+            print(f"           Activering via Microsoft (online/telefoon) is een aparte stap.")
+        elif result["status"] == "invalid":
+            print(f"\nLet op    : 'Ongeldig' betekent dat Windows de sleutel weigert bij registratie.")
+            print(f"           Deze sleutel kan niet worden geactiveerd.")
 
     elif args.command == "sell":
         success = mark_as_sold(args.key, args.order)
