@@ -4,3 +4,6 @@
 # Optioneel voor productie / WooCommerce integratie:
 # requests>=2.31.0       # WooCommerce REST API calls
 # python-dotenv>=1.0.0   # .env bestanden voor SMTP config
+
+# Testing
+pytest>=7.4
