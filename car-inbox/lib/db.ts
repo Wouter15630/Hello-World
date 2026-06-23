@@ -1,10 +1,19 @@
 import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "fs";
+import os from "os";
 import path from "path";
 
 // Eén gedeelde databaseverbinding voor de hele server.
 // SQLite houdt de MVP zelfstandig draaibaar zonder externe diensten.
-const dataDir = path.join(process.cwd(), "data");
+//
+// Op een serverless host (bijv. Vercel) is alleen de systeem-tmp beschrijfbaar
+// en wordt die per instance opgeruimd: prima voor een preview, niet duurzaam.
+// Voor een productie met persistente data verhuist deze laag naar bijv.
+// Supabase/Postgres.
+const dataDir =
+  process.env.VERCEL || process.env.CI_TMP_DB
+    ? path.join(os.tmpdir(), "car-inbox")
+    : path.join(process.cwd(), "data");
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, "app.db");
