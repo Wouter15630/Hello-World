@@ -1,0 +1,51 @@
+{
+  "house": {
+    "name": "Colledimezzo",
+    "note": "Village centre for now. Replace lat/lng with the actual house, then run `npm run refresh:routes` to recompute all 47 driving times.",
+    "lat": 41.9859206,
+    "lng": 14.3824269
+  },
+  "host": {
+    "name": "TODO: host name",
+    "phone": "TODO: host phone (+39 ...)",
+    "spoken": "NL · EN · DE · IT"
+  },
+  "wifi": {
+    "network": "TODO: wifi network name",
+    "password": "TODO: wifi password"
+  },
+  "refresh": {
+    "cadence": "weekly",
+    "cron": "0 4 * * 1"
+  },
+  "practicals": {
+    "emergency": { "label": "Emergency (all services)", "number": "112" },
+    "pharmacy": {
+      "label": "Nearest pharmacy",
+      "name": "Farmacia — Atessa",
+      "note": "TODO: confirm nearest open pharmacy; Atessa has several.",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Farmacia+Atessa"
+    },
+    "hospital": {
+      "label": "Nearest hospital",
+      "name": "Ospedale San Camillo de Lellis, Atessa",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ospedale+Atessa"
+    },
+    "shop": {
+      "label": "Village shop",
+      "name": "Olivieri Market, Colledimezzo",
+      "note": "Shuts Sunday and for the afternoon break. See its card for exact hours.",
+      "placeRef": "olivieri"
+    },
+    "fuel": {
+      "label": "Nearest fuel",
+      "name": "TODO: confirm nearest petrol station",
+      "maps": "https://www.google.com/maps/search/?api=1&query=distributore+carburante+Colledimezzo"
+    },
+    "cash": {
+      "label": "Nearest cash machine",
+      "name": "TODO: confirm nearest bancomat",
+      "maps": "https://www.google.com/maps/search/?api=1&query=bancomat+Colledimezzo"
+    }
+  }
+}

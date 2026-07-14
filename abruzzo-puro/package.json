@@ -1,0 +1,21 @@
+{
+  "name": "abruzzo-puro",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Abruzzo Puro — a single-file, offline-capable guest guide for a holiday house near Colledimezzo.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "refresh": "node scripts/refresh-places.mjs && npm run build",
+    "refresh:places": "node scripts/refresh-places.mjs",
+    "refresh:routes": "node scripts/refresh-routes.mjs",
+    "photos": "node scripts/photos.mjs",
+    "split": "node scripts/split-seed.mjs",
+    "test": "node --test",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0",
+    "sharp": "^0.33.5"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "lang": "en",
+  "label": "English",
+  "ui": {
+    "openNow": "Open now",
+    "opensAt": "Opens {t}",
+    "closedToday": "Closed today",
+    "hoursUnknown": "Hours unknown",
+    "navigate": "Navigate",
+    "call": "Call",
+    "search": "Search a name or town",
+    "clear": "Clear",
+    "showHours": "Opening hours",
+    "hideHours": "Hide hours",
+    "near20": "≤20 min",
+    "near45": "≤45 min",
+    "countOf": "{n} of {total}",
+    "noResults": "Nothing matches those filters. Clear one to see more.",
+    "minShort": "min",
+    "kmShort": "km",
+    "closedPermanently": "Permanently closed — check with your host",
+    "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "today": "today",
+    "price": ["", "€", "€€", "€€€", "€€€€"]
+  },
+  "hero": {
+    "kicker": "A guest guide near Colledimezzo",
+    "title1": "Abruzzo",
+    "title2": "Puro",
+    "tagline": "Where to go today, where to eat tonight.",
+    "statPlaces": "places",
+    "statOpen": "open now",
+    "statShut": "shut today"
+  },
+  "compass": {
+    "title": "La Bussola",
+    "lede": "Every place around the house, drawn by its true direction and its real driving time. The rings are minutes, not kilometres — in these mountains those are not the same.",
+    "house": "THE HOUSE",
+    "sea": "SEA",
+    "maiella": "MAIELLA",
+    "nowIn": "NOW · {t} IN ITALY",
+    "closestOpen": "Closest open",
+    "bestOpen": "Best rated open",
+    "shutToday": "Shut today",
+    "shutHint": "check before you drive",
+    "noneOpen": "Nothing open right now",
+    "tapHint": "Tap a dot for details, or a card below.",
+    "places": "places"
+  },
+  "sections": {
+    "see": { "nav": "See & do", "title": "See & do", "lede": "Views, gorges, the coast and the mountains — sorted by how far you have to drive." },
+    "lunch": { "nav": "Lunch", "title": "Lunch", "lede": "Midday tables, nearest first. Check the warnings: a few of these only open in the evening." },
+    "dinner": { "nav": "Dinner", "title": "Dinner", "lede": "Where to eat tonight, from the pizza slice to the Michelin star. Book the good ones ahead." },
+    "easy": { "nav": "Easy & rainy", "title": "Easy & rainy", "lede": "The shop, the pool, the fallback pizza — for slow days and wet ones." }
+  },
+  "practicals": {
+    "nav": "Practicals",
+    "title": "Practicals",
+    "lede": "The things a guide should tell you and the old PDF never did.",
+    "host": "Your host",
+    "wifi": "Wi-Fi",
+    "network": "Network",
+    "password": "Password",
+    "spoken": "Speaks",
+    "openMap": "Open in Maps",
+    "todo": "Ask your host"
+  },
+  "footer": {
+    "checked": "Ratings and opening hours last checked on {date}.",
+    "computed": "\"Open now\" is worked out on your phone from each week's hours in Italian time, so it keeps working with no signal.",
+    "credits": "Photo credits",
+    "ownerPhotos": "House photos © the owners.",
+    "built": "One page. No tracking. Works offline."
+  }
+}
