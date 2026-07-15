@@ -1,0 +1,56 @@
+name: Refresh Abruzzo Puro guide
+
+# Weekly rebuild: pull fresh ratings/hours (if a key is configured), rebuild the
+# single-file page, run the smoke test, and commit ONLY if the smoke test passes.
+on:
+  schedule:
+    - cron: "0 4 * * 1" # Monday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: abruzzo-puro
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Refresh ratings & hours (skipped automatically without a key)
+        env:
+          GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+        run: npm run refresh:places
+
+      - name: Build the page
+        run: npm run build
+
+      - name: Unit tests (open-now logic)
+        run: npm test
+
+      - name: Install Chromium for the smoke test
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke test (page must pass before anything is committed)
+        run: npm run smoke
+
+      - name: Commit refreshed data + page if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/places.live.json dist/index.html
+          if git diff --cached --quiet; then
+            echo "Nothing changed this week."
+          else
+            git commit -m "chore: weekly refresh of ratings and opening hours"
+            git push
+          fi

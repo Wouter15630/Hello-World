@@ -1,0 +1,9 @@
+node_modules/
+# Large staging inputs (not part of the deliverable)
+photos/owner/_guide.pdf
+data/_source.json
+# Wikimedia originals are fetched at build time and cached here; the credits
+# file (committed) records their attribution. The bytes themselves are not committed.
+photos/commons/*.jpg
+photos/commons/*.jpeg
+photos/commons/*.png
