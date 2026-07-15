@@ -6,13 +6,13 @@
     "lng": 14.3824269
   },
   "host": {
-    "name": "TODO: host name",
+    "name": "Tom",
     "phone": "TODO: host phone (+39 ...)",
     "spoken": "NL · EN · DE · IT"
   },
   "wifi": {
-    "network": "TODO: wifi network name",
-    "password": "TODO: wifi password"
+    "network": "SKYWIFI_WKSUE",
+    "password": "mJnXX9fIg7sPPJ"
   },
   "refresh": {
     "cadence": "weekly",
